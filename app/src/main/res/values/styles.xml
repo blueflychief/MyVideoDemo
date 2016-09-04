@@ -1,0 +1,20 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <declare-styleable name="MyMediaController">
+        <attr name="scalable" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="MyVideoView">
+        <attr name="fitXY" format="boolean" />
+        <attr name="autoRotation" format="boolean" />
+    </declare-styleable>
+
+</resources>
