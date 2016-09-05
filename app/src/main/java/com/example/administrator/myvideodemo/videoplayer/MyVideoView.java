@@ -185,7 +185,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
             return;
         }
         AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-        am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        am.requestAudioFocus(mOnAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         // we shouldn't clear the target state, because somebody might have
         // called start() previously
@@ -250,6 +250,56 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
         this.mIVideoView = callback;
     }
 
+    private AudioManager.OnAudioFocusChangeListener mOnAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            KLog.i("-----onAudioFocusChange:" + focusChange);
+            switch (focusChange) {
+                case AudioManager.AUDIOFOCUS_GAIN:   //音频获得焦点时
+                    // resume playback
+                    if (mMediaPlayer == null) {
+                        openVideo();
+                    } else if (!mMediaPlayer.isPlaying()) {
+                        mMediaPlayer.start();
+                        mMediaPlayer.setVolume(1.0f, 1.0f);
+                    }
+                    break;
+
+                case AudioManager.AUDIOFOCUS_LOSS:  //音频失去焦点时
+                    // Lost focus for an unbounded amount of time: stop playback and release media player
+
+                    if (mMediaPlayer != null) {
+                        if (mMediaPlayer.isPlaying()) {
+                            mMediaPlayer.stop();
+                        }
+                        mMediaPlayer.release();
+                        mMediaPlayer = null;
+                    }
+                    break;
+
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT: //暂时失去了音频的焦点，应该要马上回到焦点上.你一定要停止掉所有的音频的播放,但是你能持有你的资源因为你可能很快的再次获得聚焦.
+                    // Lost focus for a short time, but we have to stop
+                    // playback. We don't release the media player because playback
+                    // is likely to resume
+                    if (mMediaPlayer != null) {
+                        if (mMediaPlayer.isPlaying()) {
+                            mMediaPlayer.pause();
+                        }
+                    }
+                    break;
+
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: //暂时的失去了音频的焦点,但是你允许继续用小音量播放音乐而不是完全杀掉音频.
+                    // Lost focus for a short time, but it's ok to keep playing
+                    // at an attenuated level
+                    if (mMediaPlayer != null) {
+                        if (mMediaPlayer.isPlaying()) {
+                            mMediaPlayer.setVolume(0.1f, 0.1f);
+                        }
+                    }
+                    break;
+            }
+        }
+    };
 
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
@@ -346,7 +396,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
                     KLog.d(TAG, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_START");
                     if (mIVideoView != null) {
-                        mIVideoView.onBufferingStart(mMediaPlayer);
+                        mIVideoView.onVideoBufferingStart(mMediaPlayer);
                     }
                     if (mMyMediaController != null) {
                         mMyMediaController.showLoading();
@@ -356,7 +406,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                     KLog.d(TAG, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_END");
                     if (mIVideoView != null) {
-                        mIVideoView.onBufferingEnd(mMediaPlayer);
+                        mIVideoView.onVideoBufferingEnd(mMediaPlayer);
                     }
                     if (mMyMediaController != null) {
                         mMyMediaController.hideLoading();
@@ -376,6 +426,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
             KLog.d(TAG, "Error: " + framework_err + "," + impl_err);
             mCurrentState = STATE_ERROR;
             mTargetState = STATE_ERROR;
+            release(true);
             if (mMyMediaController != null) {
                 mMyMediaController.showError();
             }
@@ -447,7 +498,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
             mMediaPlayer.start();
             mCurrentState = STATE_PLAYING;
             if (this.mIVideoView != null) {
-                this.mIVideoView.onStart(mMediaPlayer);
+                this.mIVideoView.onVideoStart(mMediaPlayer);
             }
         }
         mTargetState = STATE_PLAYING;
@@ -460,7 +511,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                 mMediaPlayer.pause();
                 mCurrentState = STATE_PAUSED;
                 if (this.mIVideoView != null) {
-                    this.mIVideoView.onPause(mMediaPlayer);
+                    this.mIVideoView.onVideoPause(mMediaPlayer);
                 }
             }
         }
@@ -521,6 +572,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
 
     @Override
     public void closePlayer() {
+        KLog.i("-----closePlayer");
         release(true);
     }
 
@@ -555,7 +607,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
         }
         mMyMediaController.toggleButtons(fullscreen);
         if (mIVideoView != null) {
-            mIVideoView.onScaleChange(fullscreen);
+            mIVideoView.onVideoScaleChange(fullscreen);
         }
     }
 }

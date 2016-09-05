@@ -58,27 +58,27 @@ public class VideoPlayerActivity extends AppCompatActivity implements IVideoView
     }
 
     @Override
-    public void onScaleChange(boolean isFullscreen) {
+    public void onVideoScaleChange(boolean isFullscreen) {
 
     }
 
     @Override
-    public void onPause(MediaPlayer mediaPlayer) {
+    public void onVideoPause(MediaPlayer mediaPlayer) {
 
     }
 
     @Override
-    public void onStart(MediaPlayer mediaPlayer) {
+    public void onVideoStart(MediaPlayer mediaPlayer) {
 
     }
 
     @Override
-    public void onBufferingStart(MediaPlayer mediaPlayer) {
+    public void onVideoBufferingStart(MediaPlayer mediaPlayer) {
 
     }
 
     @Override
-    public void onBufferingEnd(MediaPlayer mediaPlayer) {
+    public void onVideoBufferingEnd(MediaPlayer mediaPlayer) {
 
     }
 
