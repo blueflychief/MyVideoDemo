@@ -81,4 +81,9 @@ public class VideoPlayerActivity extends AppCompatActivity implements IVideoView
     public void onBufferingEnd(MediaPlayer mediaPlayer) {
 
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
 }

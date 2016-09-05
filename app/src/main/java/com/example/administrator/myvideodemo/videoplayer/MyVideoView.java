@@ -8,13 +8,13 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import com.example.administrator.myvideodemo.R;
+import com.example.administrator.myvideodemo.util.KLog;
 
 import java.io.IOException;
 import java.util.Map;
@@ -150,6 +150,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
     private SurfaceHolder.Callback mSurfaceHolderCallback = new SurfaceHolder.Callback() {
 
         public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+            KLog.i("------surfaceChanged");
             mSurfaceWidth = w;
             mSurfaceHeight = h;
             boolean isValidState = (mTargetState == STATE_PLAYING);
@@ -163,12 +164,14 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
         }
 
         public void surfaceCreated(SurfaceHolder holder) {
+            KLog.i("------surfaceCreated");
             mSurfaceHolder = holder;
             openVideo();
 //            enableOrientationDetect();
         }
 
         public void surfaceDestroyed(SurfaceHolder holder) {
+            KLog.i("------surfaceDestroyed");
             mSurfaceHolder = null;
             if (mMyMediaController != null) mMyMediaController.hideControlBar();
             release(true);
@@ -213,11 +216,12 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
             mCurrentState = STATE_PREPARING;
             attachMediaController();
         } catch (IOException ex) {
-            Log.w(TAG, "Unable to open content: " + mUri, ex);
+            KLog.w(TAG, "Unable to open content: " + mUri, ex);
             mCurrentState = STATE_ERROR;
             mTargetState = STATE_ERROR;
             mErrorListener.onError(mMediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, 0);
         }
+        KLog.i("------openVideo");
     }
 
     /*
@@ -233,6 +237,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                 mTargetState = STATE_IDLE;
             }
         }
+        KLog.i("------release");
     }
 
 
@@ -274,7 +279,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                 seekTo(seekToPosition);
             }
             if (mVideoWidth != 0 && mVideoHeight != 0) {
-                //Log.i("@@@@", "video size: " + mVideoWidth +"/"+ mVideoHeight);
+                //KLog.i("@@@@", "video size: " + mVideoWidth +"/"+ mVideoHeight);
                 getHolder().setFixedSize(mVideoWidth, mVideoHeight);
                 if (mSurfaceWidth == mVideoWidth && mSurfaceHeight == mVideoHeight) {
                     // We didn't actually change the size (it was already at the size
@@ -308,7 +313,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
             mVideoWidth = mp.getVideoWidth();
             mVideoHeight = mp.getVideoHeight();
-            Log.d(TAG, String.format("onVideoSizeChanged width=%d,height=%d", mVideoWidth, mVideoHeight));
+            KLog.d(TAG, String.format("onVideoSizeChanged width=%d,height=%d", mVideoWidth, mVideoHeight));
             if (mVideoWidth != 0 && mVideoHeight != 0) {
                 getHolder().setFixedSize(mVideoWidth, mVideoHeight);
                 requestLayout();
@@ -326,7 +331,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                 mMyMediaController.showComplete();
                 //FIXME 播放完成后,视频中央会显示一个播放按钮,点击播放按钮会调用start重播,
                 // 但start后竟然又回调到这里,导致第一次点击按钮不会播放视频,需要点击第二次.
-                Log.d(TAG, String.format("a=%s,b=%d", a, b));
+                KLog.d(TAG, String.format("a=%s,b=%d", a, b));
             }
 //                    if (mOnCompletionListener != null) {
 //                        mOnCompletionListener.onCompletion(mMediaPlayer);
@@ -339,7 +344,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
             boolean handled = false;
             switch (what) {
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                    Log.d(TAG, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_START");
+                    KLog.d(TAG, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_START");
                     if (mIVideoView != null) {
                         mIVideoView.onBufferingStart(mMediaPlayer);
                     }
@@ -349,7 +354,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
                     handled = true;
                     break;
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    Log.d(TAG, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_END");
+                    KLog.d(TAG, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_END");
                     if (mIVideoView != null) {
                         mIVideoView.onBufferingEnd(mMediaPlayer);
                     }
@@ -368,7 +373,7 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
 
     private MediaPlayer.OnErrorListener mErrorListener = new MediaPlayer.OnErrorListener() {
         public boolean onError(MediaPlayer mp, int framework_err, int impl_err) {
-            Log.d(TAG, "Error: " + framework_err + "," + impl_err);
+            KLog.d(TAG, "Error: " + framework_err + "," + impl_err);
             mCurrentState = STATE_ERROR;
             mTargetState = STATE_ERROR;
             if (mMyMediaController != null) {
@@ -382,8 +387,8 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
 //                        }
 //                    }
 
-            /* Otherwise, pop up an error dialog so the user knows that
-             * something bad has happened. Only try and pop up the dialog
+            /* Otherwise, pop up an error diaKLog so the user knows that
+             * something bad has happened. Only try and pop up the diaKLog
              * if we're attached to a window. When we're going away and no
              * longer have a window, don't bother showing the user an error.
              */
@@ -397,11 +402,11 @@ public class MyVideoView extends SurfaceView implements IMyMediaControl {
 //                            messageId = com.android.internal.R.string.VideoView_error_text_unknown;
 //                        }
 //
-//                        new AlertDialog.Builder(mContext)
+//                        new AlertDiaKLog.Builder(mContext)
 //                                .setMessage(messageId)
 //                                .setPositiveButton(com.android.internal.R.string.VideoView_error_button,
-//                                        new DialogInterface.OnClickListener() {
-//                                            public void onClick(DialogInterface dialog, int whichButton) {
+//                                        new DiaKLogInterface.OnClickListener() {
+//                                            public void onClick(DiaKLogInterface diaKLog, int whichButton) {
 //                                        /* If we get here, there is no onError listener, so
 //                                         * at least inform them that the video is over.
 //                                         */

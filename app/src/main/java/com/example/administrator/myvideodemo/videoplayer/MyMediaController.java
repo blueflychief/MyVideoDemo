@@ -5,7 +5,6 @@ import android.content.res.TypedArray;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -17,6 +16,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.administrator.myvideodemo.R;
+import com.example.administrator.myvideodemo.util.KLog;
 
 import java.util.Formatter;
 import java.util.Locale;
@@ -46,7 +46,8 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
     private MyHandler mHandler;
     private IMyMediaControl mIMyMediaControl;
 
-    private static final int ACTION_IS_SHOW_CONTROL_BAR = 10;
+    private static final int ACTION_SHOW_CONTROL_BAR = 9;
+    private static final int ACTION_HIDE_CONTROL_BAR = 10;
     private static final int ACTION_SHOW_LOADDING = 11;
     private static final int ACTION_HIDE_LOADDING = 12;
     private static final int ACTION_SHOW_COMPLETE = 14;
@@ -98,8 +99,8 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
 
         //重新开始播放
         iv_center_play.setOnClickListener(this);
-
-        //返回按钮仅在全屏状态下可见
+        bt_switch.setOnClickListener(this);
+        bt_scale.setOnClickListener(this);
         bt_back.setOnClickListener(this);
 
         sb_progress.setMax(1000);
@@ -168,12 +169,11 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
             super.handleMessage(msg);
             int pos;
             switch (msg.what) {
-                case ACTION_IS_SHOW_CONTROL_BAR:  //是否显示ControlBar
-                    if (mIsControlBarShow) {
-                        hideControlBar();
-                    } else {
-                        showControlBar();
-                    }
+                case ACTION_SHOW_CONTROL_BAR:
+                    showControlBar();
+                    break;
+                case ACTION_HIDE_CONTROL_BAR:
+                    hideControlBar();
                     break;
                 case ACTION_HIDE_LOADDING:
                     showCenterView(ACTION_HIDE_LOADDING);
@@ -204,6 +204,7 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
                     break;
             }
         }
+
     }
 
     private void showCenterView(int action) {
@@ -241,11 +242,17 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.rl_root:
-                mHandler.sendEmptyMessage(ACTION_IS_SHOW_CONTROL_BAR);
+                if (mIsControlBarShow) {
+                    mHandler.removeCallbacksAndMessages(ACTION_SHOW_CONTROL_BAR);
+                    mHandler.sendEmptyMessage(ACTION_HIDE_CONTROL_BAR);
+                } else {
+                    mHandler.sendEmptyMessage(ACTION_SHOW_CONTROL_BAR);
+                }
                 break;
             case R.id.iv_center_play:
                 mHandler.sendEmptyMessage(ACTION_HIDE_CENTER);
                 mIMyMediaControl.start();
+                updateSwitch();
                 break;
             case R.id.bt_back:
                 if (mIsFullScreen) {
@@ -254,6 +261,15 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
                     updateBackButton();
                     mIMyMediaControl.setFullscreen(false);
                 }
+            case R.id.bt_switch:
+                if (mIMyMediaControl.isPlaying()) {
+                    if (mIMyMediaControl.canPause()) {
+                        mIMyMediaControl.pause();
+                    }
+                } else {
+                    mIMyMediaControl.start();
+                }
+                updateSwitch();
                 break;
         }
     }
@@ -276,11 +292,11 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
 
     //只负责上下两条bar的隐藏,不负责中央loading,error,playBtn的隐藏
     public void hideControlBar() {
-        Log.i(TAG, "------hideControlBar");
+        KLog.i(TAG, "------hideControlBar");
         ll_title_bar.setVisibility(GONE);
         ll_control_bar.setVisibility(GONE);
         mIsControlBarShow = false;
-        mHandler.removeCallbacksAndMessages(ACTION_IS_SHOW_CONTROL_BAR);
+
     }
 
     public void showControlBar() {
@@ -288,7 +304,7 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
     }
 
     public void showControlBar(int interval) {
-        Log.i(TAG, "------showControlBar");
+        KLog.i(TAG, "------showControlBar");
 
 
         if (!mIsControlBarShow) {
@@ -304,9 +320,8 @@ public class MyMediaController extends FrameLayout implements View.OnClickListen
         ll_title_bar.setVisibility(VISIBLE);
         ll_control_bar.setVisibility(VISIBLE);
         mIsControlBarShow = true;
-
-        mHandler.removeCallbacksAndMessages(ACTION_IS_SHOW_CONTROL_BAR);
-        mHandler.sendEmptyMessageDelayed(ACTION_IS_SHOW_CONTROL_BAR, interval >= 0 ? interval : CONTROL_BAR_DISMISS_INTERVAL);
+        mHandler.removeMessages(ACTION_HIDE_CONTROL_BAR);
+        mHandler.sendEmptyMessageDelayed(ACTION_HIDE_CONTROL_BAR, interval >= 0 ? interval : CONTROL_BAR_DISMISS_INTERVAL);
     }
 
     private int setProgress() {
